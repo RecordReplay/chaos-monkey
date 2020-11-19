@@ -10,3 +10,4 @@ Here are some steps that we will do for every recording:
 - [ ] seeking to logpoints randomly
 - [ ] step randomly through the code
 - [ ] expand objects (aka load properties) randomly
+- [ ] scriptable by other things (the test inbox)

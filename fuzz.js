@@ -1,14 +1,19 @@
 /* Copyright 2020 Record Replay Inc. */
 
-const {log} = require("./logger");
+const { log, logError } = require("./logger");
 const ProtocolClient = require("./client");
 
 let gClient, gSessionId;
 
 async function getLogpoints(location) {
   // Analysis.addRandomPoints
+  let results = [];
+  gClient.addEventListener("Analysis.analysisResult", (stuff) => {
+    //    log(`got analysis result ${JSON.stringify(stuff, null, 2)}`);
+    results.push(...stuff.results.map((r) => r.value));
+  });
 
-  const analysis = await gClient.sendCommand("Analysis.createAnalysis", {
+  const { analysisId } = await gClient.sendCommand("Analysis.createAnalysis", {
     mapper: `
     const { point, time, pauseId } = input;
     return [{
@@ -18,8 +23,14 @@ async function getLogpoints(location) {
     effectful: true,
   });
 
-  await gClient.sendCommand("Analysis.addLocation", {location});
-  await gClient.sendCommand("Analysis.runAnalysis");
+  await gClient.sendCommand("Analysis.addLocation", {
+    location,
+    analysisId,
+    sessionId: gSessionId,
+  });
+  await gClient.sendCommand("Analysis.runAnalysis", { analysisId });
+
+  return results;
 }
 
 // Completely replay a recording in a new session.
@@ -84,17 +95,35 @@ async function replayRecording(dispatchAddress, recordingId, url) {
     await client.sendCommand("Debugger.findSources", {}, sessionId);
     console.log(sources);
 
-    const positions = await client.sendCommand(
+    // TODO(dmiller): what if there are zero sources??
+    // TODO(dmiller): select random # of sources
+    let firstSourceId = sources[0].sourceId;
+    const possibleBreakpoints = await client.sendCommand(
       "Debugger.getPossibleBreakpoints",
-      {sourceId: sources[0].sourceId},
+      { sourceId: firstSourceId },
       sessionId
     );
 
-    await getLogpoints({sourceId: sources[0].sourceId, line: 35, column: 6});
+    log(
+      "Got possible breakpoints",
+      JSON.stringify(possibleBreakpoints, null, 2)
+    );
+    let results = await getLogpoints({
+      sourceId: firstSourceId,
+      line: 65,
+      column: 43,
+    });
+    log("Got logpoints for pos 65:43", results);
 
-    console.log(JSON.stringify(positions, null, 2));
+    // TODO take a random one of these logpoints
+    const point = '1622592768293829581448683112628352';
+    const pauseObject = await client.sendCommand("Session.createPause", { point }, sessionId);
+    // TODO from the pause try fetching some objects
+    log("got a pause object", JSON.stringify(pauseObject, null, 2));
+    const stepResult = await client.sendCommand("Debugger.findStepOverTarget", { point }, sessionId);
+    log("got a step over result", JSON.stringify(stepResult, null, 2));
   } catch (e) {
-    console.error(e);
+    logError("Encountered error doing stuff", e);
   }
 
   await client.sendCommand("Recording.releaseSession", {sessionId});
