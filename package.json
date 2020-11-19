@@ -1,0 +1,23 @@
+{
+  "name": "chaos-monkey",
+  "version": "1.0.0",
+  "description": "The goal of the project is to test the Replay protocol.",
+  "main": "index.js",
+  "dependencies": {
+    "ws": "^7.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RecordReplay/chaos-monkey.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RecordReplay/chaos-monkey/issues"
+  },
+  "homepage": "https://github.com/RecordReplay/chaos-monkey#readme"
+}
