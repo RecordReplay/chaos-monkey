@@ -1,5 +1,4 @@
 /* Copyright 2020 Record Replay Inc. */
-// TODO(dmiller): log all of the choices we made so we could reproduce this replay if we wanted to
 const sample = require("lodash.sample");
 const seedrandom = require("seedrandom");
 
@@ -9,9 +8,6 @@ const ProtocolClient = require("./client");
 let gClient, gSessionId;
 
 const rng = seedrandom();
-const seed2 = rng();
-log("seed for this run: ", seed2);
-seedrandom(seed2, { global: true });
 
 async function getLogpoints(location) {
   // Analysis.addRandomPoints
@@ -42,8 +38,15 @@ async function getLogpoints(location) {
 }
 
 // Completely replay a recording in a new session.
-async function replayRecording(dispatchAddress, recordingId, url) {
-  console.log(new Date(), "ReplayRecording Start", recordingId);
+async function replayRecording(
+  dispatchAddress,
+  recordingId,
+  url,
+  seed = rng()
+) {
+  log(new Date(), "ReplayRecording Start", recordingId);
+  log("seed for this run: ", seed);
+  seedrandom(seed, { global: true });
 
   const client = new ProtocolClient(dispatchAddress, {
     onError(e) {
