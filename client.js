@@ -16,7 +16,7 @@ class ProtocolClient {
 
     this.socket.on("close", callbacks.onClose);
     this.socket.on("error", callbacks.onError);
-    this.socket.on("message", msg => this.onMessage(JSON.parse(msg)));
+    this.socket.on("message", (msg) => this.onMessage(JSON.parse(msg)));
 
     // Internal state.
     this.eventListeners = new Map();
@@ -32,10 +32,16 @@ class ProtocolClient {
     this.eventListeners.set(event, listener);
   }
 
-  async sendCommand(method, params, sessionId) {
+  async sendCommand(method, params, sessionId, pauseId) {
     await this.opened.promise;
     const id = this.nextMessageId++;
-    this.socket.send(JSON.stringify({ id, method, params, sessionId }));
+    if (pauseId) {
+      this.socket.send(
+        JSON.stringify({ id, method, params, sessionId, pauseId })
+      );
+    } else {
+      this.socket.send(JSON.stringify({ id, method, params, sessionId }));
+    }
     const waiter = defer();
     this.pendingMessages.set(id, waiter);
     return waiter.promise;

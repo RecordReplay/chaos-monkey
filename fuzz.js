@@ -102,7 +102,6 @@ async function replayRecording(
   await client.sendCommand("Internal.labelTestSession", { sessionId, url });
   await client.sendCommand("Session.ensureProcessed", {}, sessionId);
 
-  // seeking to logpoints randomly
   // step randomly through the code
   // expand objects (aka load properties) randomly
 
@@ -166,8 +165,20 @@ async function replayRecording(
       { point },
       sessionId
     );
-    // TODO from the pause try fetching some objects
-    log("got a pause object", JSON.stringify(pauseObject, null, 2));
+
+    // TODO(dmiller): try previewing more objects
+    const object = sample(pauseObject.data.objects);
+    log("Got object to preview", JSON.stringify(object, null, 2));
+    const objectId = object.objectId;
+    const params = { object: objectId };
+    const previewResult = await client.sendCommand(
+      "Pause.getObjectPreview",
+      params,
+      sessionId,
+      pauseObject.pauseId
+    );
+    log("Got object preview result", JSON.stringify(previewResult, null, 2));
+
     // TODO(dmiller): step a random # of times
     const stepResult = await client.sendCommand(
       "Debugger.findStepOverTarget",
