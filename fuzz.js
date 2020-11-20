@@ -99,9 +99,6 @@ async function replayRecording(dispatchAddress, recordingId, url) {
   await client.sendCommand("Internal.labelTestSession", { sessionId, url });
   await client.sendCommand("Session.ensureProcessed", {}, sessionId);
 
-  // get all the recording JS
-  // get all the breakable locations
-  // adding logpoints at random locations
   // seeking to logpoints randomly
   // step randomly through the code
   // expand objects (aka load properties) randomly
@@ -133,6 +130,7 @@ async function replayRecording(dispatchAddress, recordingId, url) {
       JSON.stringify(possibleBreakpoints, null, 2)
     );
 
+    // TODO(dmiller): try multiple line locations
     const lineLocation = sample(possibleBreakpoints.lineLocations);
     log("linelocation", JSON.stringify(lineLocation, null, 2));
     let logpoints = await getLogpoints({
@@ -157,6 +155,7 @@ async function replayRecording(dispatchAddress, recordingId, url) {
     );
     // TODO from the pause try fetching some objects
     log("got a pause object", JSON.stringify(pauseObject, null, 2));
+    // TODO(dmiller): step a random # of times
     const stepResult = await client.sendCommand(
       "Debugger.findStepOverTarget",
       { point },
