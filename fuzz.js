@@ -10,7 +10,6 @@ let gClient, gSessionId;
 const rng = seedrandom();
 
 async function getLogpoints(location) {
-  // Analysis.addRandomPoints
   let results = [];
   gClient.addEventListener("Analysis.analysisResult", (stuff) => {
     results.push(...stuff.results.map((r) => r.value));
@@ -36,7 +35,7 @@ async function getLogpoints(location) {
   return results;
 }
 
-// Completely replay a recording in a new session.
+// Replay a recording making a random number of random decisions, like which logpoints to set and how many times to step
 async function replayRecording(
   dispatchAddress,
   recordingId,
@@ -56,8 +55,6 @@ async function replayRecording(
     },
   });
 
-  console.log("Got client");
-
   // Automatically close any existing connection.
   if (gClient) {
     gClient.close();
@@ -65,10 +62,12 @@ async function replayRecording(
   gClient = client;
 
   client.addEventListener("Session.missingRegions", ({ regions }) => {
+    // NOTE(dmiller): this was noisy and I don't think it would aid in debugging?
     //log(`MissingRegions ${JSON.stringify(regions)}`);
   });
 
   client.addEventListener("Session.unprocessedRegions", ({ regions }) => {
+    // NOTE(dmiller): this was noisy and I don't think it would aid in debugging?
     //log(`UnprocessedRegions ${JSON.stringify(regions)}`);
   });
 
@@ -93,7 +92,7 @@ async function replayRecording(
     logError("Error creating session, stopping", e);
     process.exit(1);
   }
-  log(new Date(), "ReplayRecording HaveSessionId", sessionId);
+  log("ReplayRecording HaveSessionId", sessionId);
 
   try {
     await client.sendCommand("Internal.labelTestSession", { sessionId, url });
@@ -109,6 +108,7 @@ async function replayRecording(
   }
 
   try {
+    // sources are files that can have possible breakpoint locations in them
     let sources = [];
     client.addEventListener("Debugger.newSource", (source) => {
       sources.push(source);
@@ -119,7 +119,7 @@ async function replayRecording(
       log("No sources, so nothing to do");
       process.exit(0);
     }
-    // TODO(dmiller): select random # of sources
+    // TODO(dmiller): select random # of sources, not just one
     let source = sample(sources);
 
     let sourceId = source.sourceId;
@@ -134,6 +134,10 @@ async function replayRecording(
       JSON.stringify(possibleBreakpoints, null, 2)
     );
 
+    // try to get a logpoint at a given lineLocation
+    // if we can't, because there are no valid logpoints at that line
+    // remove that linelocation and pick a different random one
+    // if we've exhausted all possible line locations then give up
     let lineLocations = possibleBreakpoints.lineLocations;
     let chosenLogpoint;
     while (!chosenLogpoint) {
@@ -163,12 +167,15 @@ async function replayRecording(
     const logpoint = chosenLogpoint;
     log("chosen logpoint", JSON.stringify(logpoint, null, 2));
     const point = logpoint.point;
+    // create a pause at the given logpoint
+    // this is akin to advancing the debugger to that point in the execution
     const pauseObject = await client.sendCommand(
       "Session.createPause",
       { point },
       sessionId
     );
 
+    // grab some variables that are in scope and try to expand it
     // TODO(dmiller): try previewing more objects
     const object = sample(pauseObject.data.objects);
     log("Got object to preview", JSON.stringify(object, null, 2));
@@ -182,7 +189,9 @@ async function replayRecording(
     );
     log("Got object preview result", JSON.stringify(previewResult, null, 2));
 
+    // from the place where we have paused, step over
     // TODO(dmiller): step a random # of times
+    // TODO(dmiller): step in a random direction
     const stepResult = await client.sendCommand(
       "Debugger.findStepOverTarget",
       { point },
