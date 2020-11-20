@@ -102,9 +102,6 @@ async function replayRecording(
   await client.sendCommand("Internal.labelTestSession", { sessionId, url });
   await client.sendCommand("Session.ensureProcessed", {}, sessionId);
 
-  // step randomly through the code
-  // expand objects (aka load properties) randomly
-
   try {
     let sources = [];
     client.addEventListener("Debugger.newSource", (source) => {
@@ -152,6 +149,7 @@ async function replayRecording(
         log("No logpoints found for lineLocation, skipping");
         // remove the fruitless lineLocation from the list of possible lineLocations to explore
         lineLocations = lineLocations.filter((l) => l !== lineLocation);
+        continue;
       }
       //otherwise, we found some line locations. Pick one and keep going
       chosenLogpoint = sample(logpoints);
