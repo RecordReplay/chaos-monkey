@@ -43,7 +43,7 @@ async function replayRecording(
   url,
   seed = rng()
 ) {
-  log(new Date(), "ReplayRecording Start", recordingId);
+  log(new Date(), "ReplayRecording Start RecordingId: ", recordingId);
   log("seed for this run: ", seed);
   seedrandom(seed, { global: true });
 
@@ -65,14 +65,12 @@ async function replayRecording(
   gClient = client;
 
   client.addEventListener("Session.missingRegions", ({ regions }) => {
-    log(`MissingRegions ${JSON.stringify(regions)}`);
+    //log(`MissingRegions ${JSON.stringify(regions)}`);
   });
 
   client.addEventListener("Session.unprocessedRegions", ({ regions }) => {
-    log(`UnprocessedRegions ${JSON.stringify(regions)}`);
+    //log(`UnprocessedRegions ${JSON.stringify(regions)}`);
   });
-
-  console.log("added event listeners");
 
   let description;
   try {
@@ -116,7 +114,6 @@ async function replayRecording(
       sources.push(source);
     });
     await client.sendCommand("Debugger.findSources", {}, sessionId);
-    console.log(sources);
 
     if (sources.length === 0) {
       log("No sources, so nothing to do");
@@ -193,7 +190,7 @@ async function replayRecording(
     );
     log("got a step over result", JSON.stringify(stepResult, null, 2));
   } catch (e) {
-    logError("Encountered error doing stuff", e);
+    logError("Encountered error interacting with recording", e);
   }
 
   await client.sendCommand("Recording.releaseSession", { sessionId });
