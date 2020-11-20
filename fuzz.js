@@ -133,22 +133,32 @@ async function replayRecording(
       JSON.stringify(possibleBreakpoints, null, 2)
     );
 
-    // TODO(dmiller): try multiple line locations
-    const lineLocation = sample(possibleBreakpoints.lineLocations);
-    log("linelocation", JSON.stringify(lineLocation, null, 2));
-    let logpoints = await getLogpoints({
-      sourceId: sourceId,
-      line: lineLocation.line,
-      column: sample(lineLocation.columns),
-    });
-    log("Got logpoints", logpoints);
+    let lineLocations = possibleBreakpoints.lineLocations;
+    let chosenLogpoint;
+    while (!chosenLogpoint) {
+      if (lineLocations.length === 0) {
+        log("Unable to find any valid line locations, exiting");
+        process.exit(1);
+      }
+      const lineLocation = sample(lineLocations);
+      log("lineLocation", JSON.stringify(lineLocation, null, 2));
+      let logpoints = await getLogpoints({
+        sourceId: sourceId,
+        line: lineLocation.line,
+        column: sample(lineLocation.columns),
+      });
+      log("Got logpoints", logpoints);
 
-    // TODO take a random one of these logpoints
-    if (logpoints.length === 0) {
-      log("No logpoints found for lineLocation, stopping");
-      process.exit(0);
+      if (logpoints.length === 0) {
+        log("No logpoints found for lineLocation, skipping");
+        // remove the fruitless lineLocation from the list of possible lineLocations to explore
+        lineLocations = lineLocations.filter((l) => l !== lineLocation);
+      }
+      //otherwise, we found some line locations. Pick one and keep going
+      chosenLogpoint = sample(logpoints);
     }
-    const logpoint = sample(logpoints);
+
+    const logpoint = chosenLogpoint;
     log("chosen logpoint", JSON.stringify(logpoint, null, 2));
     const point = logpoint.point;
     const pauseObject = await client.sendCommand(
