@@ -1,6 +1,6 @@
 const { replayRecording } = require("./fuzz");
 
-const recordingId = "941c5405-1b40-4a32-b42f-485afc08aa24";
+const recordingId = "6e1ea523-2d3f-441c-b7e1-75adb8b35bbc";
 const url = "http://firebugs.dev";
 const dispatchAddress = "https://dispatch.replay.io";
 

@@ -4,6 +4,9 @@
   "description": "The goal of the project is to test the Replay protocol.",
   "main": "index.js",
   "dependencies": {
+    "heapdump": "^0.3.15",
+    "lodash.sample": "^4.2.1",
+    "seedrandom": "^3.0.5",
     "ws": "^7.4.0"
   },
   "devDependencies": {},
