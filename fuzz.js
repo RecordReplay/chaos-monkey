@@ -13,7 +13,6 @@ async function getLogpoints(location) {
   // Analysis.addRandomPoints
   let results = [];
   gClient.addEventListener("Analysis.analysisResult", (stuff) => {
-    //    log(`got analysis result ${JSON.stringify(stuff, null, 2)}`);
     results.push(...stuff.results.map((r) => r.value));
   });
 
@@ -84,7 +83,6 @@ async function replayRecording(
     description = "<none>";
   }
   log(`StartProcess ${recordingId} ${JSON.stringify(description)}`);
-  log("Got description");
 
   let sessionId;
   try {
@@ -97,10 +95,20 @@ async function replayRecording(
     logError("Error creating session, stopping", e);
     process.exit(1);
   }
-  console.log(new Date(), "ReplayRecording HaveSessionId", sessionId);
+  log(new Date(), "ReplayRecording HaveSessionId", sessionId);
 
-  await client.sendCommand("Internal.labelTestSession", { sessionId, url });
-  await client.sendCommand("Session.ensureProcessed", {}, sessionId);
+  try {
+    await client.sendCommand("Internal.labelTestSession", { sessionId, url });
+  } catch (e) {
+    logError("Error labeling test session", e);
+    process.exit(1);
+  }
+  try {
+    await client.sendCommand("Session.ensureProcessed", {}, sessionId);
+  } catch (e) {
+    logError("Error sending ensureProcessed");
+    process.exit(1);
+  }
 
   try {
     let sources = [];
